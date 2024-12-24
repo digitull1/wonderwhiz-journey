@@ -47,6 +47,11 @@ function getAgeGroup(age: number): AgeGroup {
   return ageGroups['14-16'];
 }
 
+function cleanJsonResponse(text: string): string {
+  // Remove markdown code block syntax if present
+  return text.replace(/```json\n|\n```|```\n/g, '').trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -122,10 +127,9 @@ serve(async (req) => {
     let text = response.text();
     console.log('Received raw response from Gemini:', text);
     
-    // Clean up the response if it contains markdown code block
-    if (text.includes('```json')) {
-      text = text.replace(/```json\n|\n```/g, '');
-    }
+    // Clean up the response by removing markdown code block syntax
+    text = cleanJsonResponse(text);
+    console.log('Cleaned response:', text);
     
     // Parse the response to ensure it's valid JSON
     let parsedContent;
