@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Target, Star, Trophy } from "lucide-react";
 
 interface Question {
   id: number;
@@ -106,6 +106,7 @@ export const Quiz = ({ topic, onComplete, onClose }: QuizProps) => {
   const [score, setScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const questions = sampleQuestions[topic] || [];
   const currentQuestion = questions[currentQuestionIndex];
@@ -119,13 +120,13 @@ export const Quiz = ({ topic, onComplete, onClose }: QuizProps) => {
     if (answerIndex === currentQuestion.correctAnswer) {
       setScore(score + 1);
       toast({
-        title: "Correct! ✨",
-        description: "Great job! Keep going!",
+        title: "✨ Brilliant!",
+        description: "You're doing amazing! Keep that curiosity flowing!",
       });
     } else {
       toast({
-        title: "Not quite right",
-        description: "Don't worry, learning is a journey!",
+        title: "Almost there! 🌟",
+        description: "Every question is a chance to learn something new!",
         variant: "destructive",
       });
     }
@@ -136,25 +137,58 @@ export const Quiz = ({ topic, onComplete, onClose }: QuizProps) => {
         setSelectedAnswer(null);
         setIsAnswered(false);
       } else {
-        onComplete(score + (answerIndex === currentQuestion.correctAnswer ? 1 : 0));
+        setShowCelebration(true);
+        setTimeout(() => {
+          onComplete(score + (answerIndex === currentQuestion.correctAnswer ? 1 : 0));
+        }, 2000);
       }
     }, 1500);
   };
 
+  if (showCelebration) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <Card className="w-full max-w-md bg-white p-8 space-y-6 text-center animate-scale-in">
+          <Trophy className="w-16 h-16 mx-auto text-yellow-400 animate-bounce" />
+          <h2 className="text-2xl font-bold text-purple-600">
+            Amazing Job! 🎉
+          </h2>
+          <p className="text-gray-600">
+            You scored {score} out of {questions.length} points!
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={onClose}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white"
+            >
+              Continue Learning
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl bg-white p-6 space-y-6">
+      <Card className="w-full max-w-2xl bg-gradient-to-b from-purple-50 to-blue-50 p-6 space-y-6 animate-fade-in">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-wonder-text">
-            Question {currentQuestionIndex + 1} of {questions.length}
-          </h2>
-          <span className="text-wonder-primary font-semibold">
-            Score: {score}
-          </span>
+          <div className="flex items-center gap-2">
+            <Target className="w-6 h-6 text-purple-500" />
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Question {currentQuestionIndex + 1} of {questions.length}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-400" />
+            <span className="text-lg font-semibold text-purple-600">
+              Score: {score}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <p className="text-lg text-wonder-text">{currentQuestion.question}</p>
+        <div className="space-y-6">
+          <p className="text-xl text-gray-800 font-medium">{currentQuestion.question}</p>
           
           <div className="grid gap-3">
             {currentQuestion.options.map((option, index) => (
@@ -162,22 +196,22 @@ export const Quiz = ({ topic, onComplete, onClose }: QuizProps) => {
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
                 disabled={isAnswered}
-                className={`w-full justify-start text-left h-auto py-3 px-4 ${
+                className={`w-full justify-start text-left h-auto py-4 px-6 rounded-xl text-lg transition-all duration-300 ${
                   isAnswered
                     ? index === currentQuestion.correctAnswer
-                      ? "bg-green-100 hover:bg-green-100 text-green-800"
+                      ? "bg-green-100 hover:bg-green-100 text-green-800 border-2 border-green-300"
                       : index === selectedAnswer
-                      ? "bg-red-100 hover:bg-red-100 text-red-800"
+                      ? "bg-red-100 hover:bg-red-100 text-red-800 border-2 border-red-300"
                       : "bg-gray-100 hover:bg-gray-100 text-gray-800"
-                    : "bg-white hover:bg-wonder-background"
+                    : "bg-white hover:bg-purple-50 hover:shadow-md"
                 }`}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-3">
                   {isAnswered && index === currentQuestion.correctAnswer && (
-                    <CheckCircle className="text-green-600 h-5 w-5" />
+                    <CheckCircle className="text-green-600 h-6 w-6 animate-scale-in" />
                   )}
                   {isAnswered && index === selectedAnswer && index !== currentQuestion.correctAnswer && (
-                    <XCircle className="text-red-600 h-5 w-5" />
+                    <XCircle className="text-red-600 h-6 w-6 animate-scale-in" />
                   )}
                   {option}
                 </span>
@@ -190,6 +224,7 @@ export const Quiz = ({ topic, onComplete, onClose }: QuizProps) => {
           <Button
             variant="outline"
             onClick={onClose}
+            className="text-purple-600 border-purple-200 hover:bg-purple-50"
           >
             Exit Quiz
           </Button>

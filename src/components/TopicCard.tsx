@@ -1,5 +1,6 @@
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { Sparkles } from "lucide-react";
 
 interface TopicCardProps {
   title: string;
@@ -19,26 +20,40 @@ export const TopicCard = ({
   onClick,
 }: TopicCardProps) => {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-b from-white to-purple-50">
       <div className="p-6 space-y-4">
         <div className="flex items-start justify-between">
-          <h3 className="text-xl font-semibold text-wonder-text">{title}</h3>
-          <span className="text-2xl">{icon}</span>
+          <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:to-blue-500 transition-all duration-300">
+            {title}
+          </h3>
+          <span className="text-3xl transform group-hover:scale-110 transition-transform duration-300 animate-float">
+            {icon}
+          </span>
         </div>
-        <p className="text-gray-600">{description}</p>
+        
+        <p className="text-gray-600 leading-relaxed">{description}</p>
+        
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-wonder-primary">+{points} points ✨</span>
-          <span className={`px-3 py-1 rounded-full text-sm ${
+          <div className="flex items-center gap-1 bg-purple-100 px-3 py-1 rounded-full">
+            <Sparkles className="w-4 h-4 text-purple-500" />
+            <span className="text-sm font-medium text-purple-700">+{points} points</span>
+          </div>
+          
+          <span className={`px-4 py-1 rounded-full text-sm font-medium ${
             difficulty === "Easy" 
-              ? "bg-green-100 text-green-800"
+              ? "bg-green-100 text-green-700"
               : difficulty === "Medium"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800"
-          }`}>
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-red-100 text-red-700"
+          } transition-colors duration-300`}>
             {difficulty}
           </span>
         </div>
-        <Button onClick={onClick} className="w-full bg-gradient-wonder text-white">
+
+        <Button 
+          onClick={onClick} 
+          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
+        >
           Explore
         </Button>
       </div>
