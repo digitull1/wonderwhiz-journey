@@ -68,8 +68,13 @@ serve(async (req) => {
     console.log('Sending prompt to Gemini:', systemPrompt);
     const result = await model.generateContent(systemPrompt);
     const response = result.response;
-    const text = response.text();
-    console.log('Received response from Gemini:', text);
+    let text = response.text();
+    console.log('Received raw response from Gemini:', text);
+    
+    // Clean up the response if it contains markdown code block
+    if (text.includes('```json')) {
+      text = text.replace(/```json\n|\n```/g, '');
+    }
     
     // Parse the response to ensure it's valid JSON
     let parsedContent;
