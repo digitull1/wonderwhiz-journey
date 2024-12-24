@@ -27,10 +27,16 @@ export const useContentGeneration = () => {
   const generateContent = async (topic: string) => {
     setIsLoading(true);
     try {
-      const { data: profileData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('age')
+        .eq('id', user.id)
         .single();
+
+      if (profileError) throw profileError;
 
       const userAge = profileData?.age || 8;
 
@@ -53,18 +59,24 @@ export const useContentGeneration = () => {
   const generateTopics = async (): Promise<Topic[]> => {
     setIsLoading(true);
     try {
-      const { data: profileData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('age')
+        .eq('id', user.id)
         .single();
+
+      if (profileError) throw profileError;
 
       const userAge = profileData?.age || 8;
 
-      // First try to get topics from the content_blocks table
-      const { data: existingTopics } = await supabase
+      // First try to get topics from the content_blocks table using proper range syntax
+      const { data: existingTopics, error: topicsError } = await supabase
         .from('content_blocks')
         .select('*')
-        .contains('age_range', [userAge]);
+        .overlaps('age_range', `[${userAge},${userAge}]`);
 
       if (existingTopics && existingTopics.length > 0) {
         return (existingTopics as ContentBlock[]).map(topic => ({
