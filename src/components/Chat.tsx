@@ -7,6 +7,7 @@ import { ChatMessage } from "./chat/ChatMessage";
 import { ChatInput } from "./chat/ChatInput";
 import { Message } from "./chat/types";
 import confetti from "canvas-confetti";
+import { useContentGeneration } from "@/hooks/use-content-generation";
 
 export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,6 +16,7 @@ export const Chat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<any>(null);
+  const { generateContent } = useContentGeneration();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -51,39 +53,32 @@ export const Chat = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: {
-          message: input,
-          userAge: userProfile?.age || 8,
-          context: messages.slice(-3).map(m => m.text).join(" "),
-        },
-      });
+      const content = await generateContent(input);
+      
+      if (content) {
+        // Add AI response with the generated content
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: content.explanation,
+          isUser: false,
+          suggestions: [
+            ...content.followUpQuestions,
+            ...content.relatedTopics.map(topic => `Tell me about ${topic.title}`)
+          ],
+        }]);
 
-      if (error) {
-        throw error;
-      }
-
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: data.response,
-        isUser: false,
-        suggestions: data.suggestions,
-        image: data.image,
-      }]);
-
-      // Trigger confetti for exciting responses
-      if (data.image || data.suggestions?.length > 0) {
+        // Trigger confetti for engaging responses
         confetti({
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 }
         });
-      }
 
-      toast({
-        title: "✨ Magic happening!",
-        description: "I've got something exciting to share with you!",
-      });
+        toast({
+          title: "✨ Magical knowledge shared!",
+          description: "I've got something exciting to share with you!",
+        });
+      }
     } catch (error) {
       console.error('Chat error:', error);
       toast({
