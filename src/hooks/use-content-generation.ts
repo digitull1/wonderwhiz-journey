@@ -44,9 +44,12 @@ export const useContentGeneration = () => {
         body: { topic, userAge }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
-      console.log('Generated content:', data);
+      console.log('Raw response from edge function:', data);
       return data;
     } catch (error) {
       console.error('Error generating content:', error);
@@ -72,7 +75,7 @@ export const useContentGeneration = () => {
 
       const userAge = profileData?.age || 8;
 
-      // First try to get topics from the content_blocks table using proper range syntax
+      // First try to get topics from the content_blocks table
       const { data: existingTopics, error: topicsError } = await supabase
         .from('content_blocks')
         .select('*')

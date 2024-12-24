@@ -28,6 +28,21 @@ export const Chat = () => {
           .eq('id', user.id)
           .single();
         setUserProfile(data);
+      } else {
+        // Create an anonymous session if no user exists
+        const { data: { user: anonUser }, error } = await supabase.auth.signUp({
+          email: `anonymous_${Date.now()}@temp.com`,
+          password: crypto.randomUUID(),
+        });
+        
+        if (!error && anonUser) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', anonUser.id)
+            .single();
+          setUserProfile(data);
+        }
       }
     };
     fetchProfile();
@@ -54,16 +69,17 @@ export const Chat = () => {
 
     try {
       const content = await generateContent(input);
+      console.log('Generated content:', content);
       
       if (content) {
         // Add AI response with the generated content
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
-          text: content.explanation,
+          text: content.explanation || "I couldn't generate a proper response. Please try again.",
           isUser: false,
           suggestions: [
-            ...content.followUpQuestions,
-            ...content.relatedTopics.map(topic => `Tell me about ${topic.title}`)
+            ...(content.followUpQuestions || []),
+            ...(content.relatedTopics?.map(topic => `Tell me about ${topic.title}`) || [])
           ],
         }]);
 
@@ -96,7 +112,7 @@ export const Chat = () => {
   };
 
   return (
-    <Card className="flex flex-col h-[600px] w-full max-w-2xl mx-auto bg-gradient-to-b from-purple-50 to-blue-50 shadow-2xl rounded-xl overflow-hidden border-2 border-purple-100">
+    <Card className="flex flex-col h-[calc(100vh-8rem)] w-full max-w-4xl mx-auto bg-gradient-to-b from-purple-50 to-blue-50 shadow-2xl rounded-xl overflow-hidden border-2 border-purple-100">
       <ScrollArea ref={scrollRef} className="flex-1 p-4 space-y-6">
         {messages.map((message) => (
           <ChatMessage
