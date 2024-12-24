@@ -6,15 +6,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface AgeGroup {
+  range: string;
+  tone: string;
+  complexity: string;
+  visuals: string[];
+}
+
+const ageGroups: Record<string, AgeGroup> = {
+  '5-7': {
+    range: '5-7',
+    tone: 'playful and encouraging',
+    complexity: 'simple sentences with easy words',
+    visuals: ['🌈', '🦄', '🌟']
+  },
+  '8-10': {
+    range: '8-10',
+    tone: 'curious and adventurous',
+    complexity: 'basic scientific terms with explanations',
+    visuals: ['🪐', '🧬', '🔭']
+  },
+  '11-13': {
+    range: '11-13',
+    tone: 'exploratory with critical thinking',
+    complexity: 'detailed explanations with cause-effect',
+    visuals: ['🚀', '🌋', '🧪']
+  },
+  '14-16': {
+    range: '14-16',
+    tone: 'inquisitive and thought-provoking',
+    complexity: 'technical terms with definitions',
+    visuals: ['🌌', '🔬', '🪐']
+  }
+};
+
+function getAgeGroup(age: number): AgeGroup {
+  if (age <= 7) return ageGroups['5-7'];
+  if (age <= 10) return ageGroups['8-10'];
+  if (age <= 13) return ageGroups['11-13'];
+  return ageGroups['14-16'];
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, type } = await req.json();
-    console.log(`Generating content for type: ${type}, prompt: ${prompt}`);
+    const { prompt, type, userAge = 8 } = await req.json();
+    console.log(`Generating content for type: ${type}, prompt: ${prompt}, age: ${userAge}`);
 
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
@@ -24,10 +64,12 @@ serve(async (req) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
+    const ageGroup = getAgeGroup(userAge);
     let systemPrompt = "";
+
     switch (type) {
       case "topics":
-        systemPrompt = `Generate 3 educational topics for children. Return ONLY a JSON array with objects containing these exact keys:
+        systemPrompt = `Generate 3 educational topics for children aged ${ageGroup.range} years. Use a ${ageGroup.tone} tone with ${ageGroup.complexity}. Return ONLY a JSON array with objects containing these exact keys:
           - title: string (engaging and child-friendly)
           - description: string (brief, fun explanation)
           - points: number (between 5-20)
@@ -46,7 +88,7 @@ serve(async (req) => {
           ]`;
         break;
       case "content":
-        systemPrompt = `Generate educational content about "${prompt}" for children. Return ONLY a JSON object with these exact keys:
+        systemPrompt = `Generate educational content about "${prompt}" for children aged ${ageGroup.range} years. Use a ${ageGroup.tone} tone with ${ageGroup.complexity}. Return ONLY a JSON object with these exact keys:
           - explanation: string (a fun, detailed explanation)
           - facts: string[] (array of 3 interesting facts)
           - followUpQuestions: string[] (array of 3 questions to spark curiosity)
