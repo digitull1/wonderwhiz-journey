@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Star, ArrowRight } from "lucide-react";
+import { Star, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import { Quiz } from "./Quiz";
+import { useImageGeneration } from "@/hooks/use-image-generation";
 
 interface TopicDeepDiveProps {
   title: string;
@@ -86,7 +87,18 @@ export const TopicDeepDive = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showRelatedTopics, setShowRelatedTopics] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const { generateImage, isLoading: isGeneratingImage } = useImageGeneration();
   const relatedTopics = getRelatedTopics(title);
+
+  useEffect(() => {
+    const generateTopicImage = async () => {
+      const prompt = `Educational illustration of ${title} for children, colorful, engaging, safe for work`;
+      const image = await generateImage(prompt);
+      if (image) setGeneratedImage(image);
+    };
+    generateTopicImage();
+  }, [title]);
 
   const handleStartQuiz = () => {
     setIsLoading(true);
@@ -136,6 +148,20 @@ export const TopicDeepDive = ({
         <div className="space-y-4">
           <p className="text-gray-600 leading-relaxed">{description}</p>
           
+          {isGeneratingImage ? (
+            <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
+              <Loader2 className="w-8 h-8 text-wonder-primary animate-spin" />
+            </div>
+          ) : generatedImage && (
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+              <img
+                src={generatedImage}
+                alt={title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           <div className="bg-wonder-background/50 p-4 rounded-lg">
             <h3 className="flex items-center gap-2 font-semibold text-wonder-text mb-2">
               <Star className="h-5 w-5 text-wonder-primary" />
