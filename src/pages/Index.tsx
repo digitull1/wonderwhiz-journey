@@ -1,46 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { TopicCard } from "@/components/TopicCard";
 import { TopicDeepDive } from "@/components/TopicDeepDive";
 import { Chat } from "@/components/Chat";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useContentGeneration } from "@/hooks/use-content-generation";
+import { Loader2 } from "lucide-react";
 
-const topics = [
-  {
-    id: 1,
-    title: "Why do rainbows appear after rain?",
-    description: "Discover the colorful magic of light and water!",
-    points: 10,
-    difficulty: "Easy" as const,
-    icon: "🌈",
-    fullDescription: "Rainbows appear when sunlight hits water droplets in the air at just the right angle. Each droplet acts like a tiny prism, splitting white light into all the colors we can see. That's why we often see rainbows after it rains - there are lots of water droplets in the air! The rainbow's shape is actually a full circle, but we usually only see half of it because the ground gets in the way.",
-  },
-  {
-    id: 2,
-    title: "Why do stars twinkle at night?",
-    description: "Learn about the dancing lights in our night sky!",
-    points: 10,
-    difficulty: "Easy" as const,
-    icon: "⭐",
-    fullDescription: "Stars appear to twinkle because their light travels through Earth's moving atmosphere. As the air moves, it bends the starlight slightly, making the stars seem to sparkle and dance in the night sky. This is called atmospheric scintillation. Interestingly, if you were in space, the stars wouldn't appear to twinkle at all!",
-  },
-  {
-    id: 3,
-    title: "How do butterflies transform?",
-    description: "Watch nature's most amazing transformation!",
-    points: 15,
-    difficulty: "Medium" as const,
-    icon: "🦋",
-    fullDescription: "Butterflies go through an amazing process called metamorphosis. It starts when a tiny egg hatches into a caterpillar. The caterpillar eats lots of leaves and grows bigger. Then, it forms a chrysalis around itself. Inside the chrysalis, the caterpillar's body completely changes, and after about two weeks, a beautiful butterfly emerges!",
-  },
-];
+interface Topic {
+  title: string;
+  description: string;
+  points: number;
+  difficulty: "Easy" | "Medium" | "Hard";
+  icon: string;
+}
 
 const Index = () => {
   const [user, setUser] = useState<{ name: string; age: number } | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<typeof topics[0] | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [points, setPoints] = useState(0);
   const [showChat, setShowChat] = useState(false);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const { generateTopics, isLoading } = useContentGeneration();
+
+  useEffect(() => {
+    const loadTopics = async () => {
+      const generatedTopics = await generateTopics();
+      if (generatedTopics.length > 0) {
+        setTopics(generatedTopics);
+      }
+    };
+    loadTopics();
+  }, []);
 
   const handleWelcomeComplete = (name: string, age: number) => {
     setUser({ name, age });
@@ -49,7 +41,7 @@ const Index = () => {
     });
   };
 
-  const handleTopicClick = (topic: typeof topics[0]) => {
+  const handleTopicClick = (topic: Topic) => {
     setSelectedTopic(topic);
   };
 
@@ -63,7 +55,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-wonder-background to-white">
-      <div className="container py-8">
+      <div className="container py-8 animate-fade-in">
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-wonder-text">
@@ -86,15 +78,26 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {topics.map((topic) => (
-            <TopicCard
-              key={topic.id}
-              {...topic}
-              onClick={() => handleTopicClick(topic)}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 text-wonder-primary animate-spin" />
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {topics.map((topic, index) => (
+              <div
+                key={index}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <TopicCard
+                  {...topic}
+                  onClick={() => handleTopicClick(topic)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {showChat && (
           <div className="mt-8 animate-fade-in">
@@ -106,7 +109,7 @@ const Index = () => {
       {selectedTopic && (
         <TopicDeepDive
           title={selectedTopic.title}
-          description={selectedTopic.fullDescription}
+          description={selectedTopic.description}
           icon={selectedTopic.icon}
           onClose={handleTopicClose}
         />

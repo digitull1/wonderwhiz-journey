@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Star, ArrowRight, Loader2 } from "lucide-react";
+import { Star } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import { Quiz } from "./Quiz";
-import { useImageGeneration } from "@/hooks/use-image-generation";
+import { TopicImage } from "./topic/TopicImage";
+import { RelatedTopics } from "./topic/RelatedTopics";
+import { useContentGeneration } from "@/hooks/use-content-generation";
 
 interface TopicDeepDiveProps {
   title: string;
@@ -12,70 +14,6 @@ interface TopicDeepDiveProps {
   icon: string;
   onClose: () => void;
 }
-
-interface RelatedTopic {
-  title: string;
-  description: string;
-  icon: string;
-}
-
-const getRelatedTopics = (topic: string): RelatedTopic[] => {
-  const topicMap: Record<string, RelatedTopic[]> = {
-    "Why do stars twinkle at night?": [
-      {
-        title: "What are constellations?",
-        description: "Discover the stories written in the stars!",
-        icon: "✨"
-      },
-      {
-        title: "How are stars born?",
-        description: "The amazing journey of stellar formation",
-        icon: "🌟"
-      },
-      {
-        title: "What is the Milky Way?",
-        description: "Our cosmic neighborhood",
-        icon: "🌌"
-      }
-    ],
-    "Why do rainbows appear after rain?": [
-      {
-        title: "How do clouds form?",
-        description: "The science behind nature's cotton candy",
-        icon: "☁️"
-      },
-      {
-        title: "What causes lightning?",
-        description: "Nature's spectacular light show",
-        icon: "⚡"
-      },
-      {
-        title: "Why is the sky blue?",
-        description: "The colorful mystery above us",
-        icon: "🌤️"
-      }
-    ],
-    "How do butterflies transform?": [
-      {
-        title: "Why do caterpillars eat so much?",
-        description: "The hungry stage of metamorphosis",
-        icon: "🐛"
-      },
-      {
-        title: "What is metamorphosis?",
-        description: "Nature's amazing transformations",
-        icon: "🦋"
-      },
-      {
-        title: "How do insects grow?",
-        description: "The fascinating life cycles of bugs",
-        icon: "🐞"
-      }
-    ]
-  };
-
-  return topicMap[topic] || [];
-};
 
 export const TopicDeepDive = ({
   title,
@@ -87,17 +25,21 @@ export const TopicDeepDive = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showRelatedTopics, setShowRelatedTopics] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const { generateImage, isLoading: isGeneratingImage } = useImageGeneration();
-  const relatedTopics = getRelatedTopics(title);
+  const { generateContent } = useContentGeneration();
+  const [content, setContent] = useState<{
+    explanation: string;
+    facts: string[];
+    followUpQuestions: string[];
+  } | null>(null);
 
   useEffect(() => {
-    const generateTopicImage = async () => {
-      const prompt = `Educational illustration of ${title} for children, colorful, engaging, safe for work`;
-      const image = await generateImage(prompt);
-      if (image) setGeneratedImage(image);
+    const loadContent = async () => {
+      const generatedContent = await generateContent(title);
+      if (generatedContent) {
+        setContent(generatedContent);
+      }
     };
-    generateTopicImage();
+    loadContent();
   }, [title]);
 
   const handleStartQuiz = () => {
@@ -132,7 +74,7 @@ export const TopicDeepDive = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in">
-      <Card className="w-full max-w-2xl bg-white p-6 space-y-6 relative">
+      <Card className="w-full max-w-2xl bg-white p-6 space-y-6 relative animate-scale-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -146,58 +88,38 @@ export const TopicDeepDive = ({
         </div>
 
         <div className="space-y-4">
-          <p className="text-gray-600 leading-relaxed">{description}</p>
+          <p className="text-gray-600 leading-relaxed">
+            {content?.explanation || description}
+          </p>
           
-          {isGeneratingImage ? (
-            <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
-              <Loader2 className="w-8 h-8 text-wonder-primary animate-spin" />
-            </div>
-          ) : generatedImage && (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-              <img
-                src={generatedImage}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
+          <TopicImage title={title} />
+
+          {content?.facts && (
+            <div className="bg-wonder-background/50 p-4 rounded-lg animate-fade-in">
+              <h3 className="flex items-center gap-2 font-semibold text-wonder-text mb-2">
+                <Star className="h-5 w-5 text-wonder-primary" />
+                Fun Facts!
+              </h3>
+              <ul className="space-y-2">
+                {content.facts.map((fact, index) => (
+                  <li key={index} className="text-gray-600">
+                    {fact}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
-          <div className="bg-wonder-background/50 p-4 rounded-lg">
-            <h3 className="flex items-center gap-2 font-semibold text-wonder-text mb-2">
-              <Star className="h-5 w-5 text-wonder-primary" />
-              Fun Fact!
-            </h3>
-            <p className="text-gray-600">
-              Did you know? Scientists estimate there are over 100 billion stars in our Milky Way galaxy alone!
-            </p>
-          </div>
-
-          {showRelatedTopics && relatedTopics.length > 0 && (
-            <div className="space-y-4 mt-6">
-              <h3 className="text-lg font-semibold text-wonder-text">Want to explore more? 🚀</h3>
-              <div className="grid gap-4">
-                {relatedTopics.map((topic, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      toast({
-                        title: "New Adventure!",
-                        description: "Let's explore this exciting topic!",
-                      });
-                    }}
-                    className="flex items-center justify-between p-4 bg-white rounded-lg border border-wonder-primary/20 hover:border-wonder-primary hover:shadow-md transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{topic.icon}</span>
-                      <div className="text-left">
-                        <h4 className="font-medium text-wonder-text">{topic.title}</h4>
-                        <p className="text-sm text-gray-600">{topic.description}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-wonder-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
-              </div>
+          {content?.followUpQuestions && showRelatedTopics && (
+            <div className="space-y-2 animate-fade-in">
+              <h3 className="text-lg font-semibold text-wonder-text">
+                Curious to know more? 🤔
+              </h3>
+              {content.followUpQuestions.map((question, index) => (
+                <p key={index} className="text-gray-600">
+                  {question}
+                </p>
+              ))}
             </div>
           )}
         </div>
@@ -206,12 +128,13 @@ export const TopicDeepDive = ({
           <Button
             variant="outline"
             onClick={onClose}
+            className="animate-fade-in"
           >
             Maybe Later
           </Button>
           <Button
             onClick={handleStartQuiz}
-            className="bg-gradient-wonder text-white"
+            className="bg-gradient-wonder text-white animate-fade-in"
             disabled={isLoading}
           >
             {isLoading ? "Preparing..." : "Start Quiz!"}
