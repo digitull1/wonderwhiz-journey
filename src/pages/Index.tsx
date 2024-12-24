@@ -2,6 +2,7 @@ import { useState } from "react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { TopicCard } from "@/components/TopicCard";
 import { TopicDeepDive } from "@/components/TopicDeepDive";
+import { Chat } from "@/components/Chat";
 import { toast } from "sonner";
 
 const topics = [
@@ -38,6 +39,7 @@ const Index = () => {
   const [user, setUser] = useState<{ name: string; age: number } | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<typeof topics[0] | null>(null);
   const [points, setPoints] = useState(0);
+  const [showChat, setShowChat] = useState(false);
 
   const handleWelcomeComplete = (name: string, age: number) => {
     setUser({ name, age });
@@ -66,9 +68,17 @@ const Index = () => {
             <h1 className="text-3xl font-bold text-wonder-text">
               Welcome back, {user.name}! ✨
             </h1>
-            <span className="text-wonder-primary font-semibold text-lg">
-              Points: {points}
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-wonder-primary font-semibold text-lg">
+                Points: {points}
+              </span>
+              <Button
+                onClick={() => setShowChat(!showChat)}
+                className="bg-wonder-primary hover:bg-wonder-primary/90"
+              >
+                {showChat ? "Hide Chat" : "Show Chat"}
+              </Button>
+            </div>
           </div>
           <p className="text-gray-600">
             Click on any topic that sparks your curiosity
@@ -84,6 +94,12 @@ const Index = () => {
             />
           ))}
         </div>
+
+        {showChat && (
+          <div className="mt-8 animate-fade-in">
+            <Chat />
+          </div>
+        )}
       </div>
 
       {selectedTopic && (
