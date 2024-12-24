@@ -1,6 +1,6 @@
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ChevronRight } from "lucide-react";
 
 interface TopicCardProps {
   title: string;
@@ -20,7 +20,7 @@ export const TopicCard = ({
   onClick,
 }: TopicCardProps) => {
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-b from-white to-purple-50">
+    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] bg-gradient-to-b from-white to-purple-50/50 border-purple-100/50">
       <div className="p-6 space-y-4">
         <div className="flex items-start justify-between">
           <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:to-blue-500 transition-all duration-300">
@@ -31,7 +31,7 @@ export const TopicCard = ({
           </span>
         </div>
         
-        <p className="text-gray-600 leading-relaxed">{description}</p>
+        <p className="text-gray-600 leading-relaxed min-h-[3rem]">{description}</p>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 bg-purple-100 px-3 py-1 rounded-full">
@@ -52,9 +52,12 @@ export const TopicCard = ({
 
         <Button 
           onClick={onClick} 
-          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
+          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 group"
         >
-          Explore
+          <span className="flex items-center justify-center gap-2">
+            Explore
+            <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+          </span>
         </Button>
       </div>
     </Card>
