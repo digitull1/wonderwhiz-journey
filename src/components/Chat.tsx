@@ -51,27 +51,16 @@ export const Chat = () => {
     setIsLoading(true);
 
     try {
-      const context = messages.slice(-3).map(m => m.text).join(" ");
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: input,
-            userAge: userProfile?.age || 8,
-            context,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
+          message: input,
+          userAge: userProfile?.age || 8,
+          context: messages.slice(-3).map(m => m.text).join(" "),
+        },
+      });
 
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
+      if (error) {
+        throw error;
       }
 
       setMessages(prev => [...prev, {
@@ -96,6 +85,7 @@ export const Chat = () => {
         description: "I've got something exciting to share with you!",
       });
     } catch (error) {
+      console.error('Chat error:', error);
       toast({
         title: "Oops! My magic wand had a hiccup!",
         description: "Let's try that again, shall we? 🪄",
