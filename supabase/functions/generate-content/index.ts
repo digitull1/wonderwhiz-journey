@@ -16,7 +16,12 @@ serve(async (req) => {
     const { prompt, type } = await req.json();
     console.log(`Generating content for type: ${type}, prompt: ${prompt}`);
 
-    const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY')!);
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not set');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     let systemPrompt = "";
@@ -67,6 +72,10 @@ serve(async (req) => {
 
     console.log('Sending prompt to Gemini:', systemPrompt);
     const result = await model.generateContent(systemPrompt);
+    if (!result || !result.response) {
+      throw new Error('No response received from Gemini');
+    }
+    
     const response = result.response;
     let text = response.text();
     console.log('Received raw response from Gemini:', text);
@@ -80,8 +89,10 @@ serve(async (req) => {
     let parsedContent;
     try {
       parsedContent = JSON.parse(text);
+      console.log('Successfully parsed JSON:', parsedContent);
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', parseError);
+      console.error('Raw text that failed to parse:', text);
       throw new Error('Invalid JSON response from Gemini. Raw response: ' + text);
     }
 
