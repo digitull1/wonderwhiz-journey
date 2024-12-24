@@ -2,6 +2,7 @@ import { useState } from "react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { TopicCard } from "@/components/TopicCard";
 import { TopicDeepDive } from "@/components/TopicDeepDive";
+import { toast } from "sonner";
 
 const topics = [
   {
@@ -36,18 +37,21 @@ const topics = [
 const Index = () => {
   const [user, setUser] = useState<{ name: string; age: number } | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<typeof topics[0] | null>(null);
+  const [points, setPoints] = useState(0);
 
   const handleWelcomeComplete = (name: string, age: number) => {
     setUser({ name, age });
+    toast.success("Welcome to WonderWhiz! 🌟", {
+      description: "Let's start our magical learning journey!",
+    });
   };
 
   const handleTopicClick = (topic: typeof topics[0]) => {
     setSelectedTopic(topic);
   };
 
-  const handleStartQuiz = () => {
-    // TODO: Implement quiz functionality
-    console.log("Starting quiz for topic:", selectedTopic?.title);
+  const handleTopicClose = () => {
+    setSelectedTopic(null);
   };
 
   if (!user) {
@@ -58,9 +62,14 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-wonder-background to-white">
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-wonder-text mb-2">
-            Welcome back, {user.name}! ✨
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-wonder-text">
+              Welcome back, {user.name}! ✨
+            </h1>
+            <span className="text-wonder-primary font-semibold text-lg">
+              Points: {points}
+            </span>
+          </div>
           <p className="text-gray-600">
             Click on any topic that sparks your curiosity
           </p>
@@ -82,8 +91,7 @@ const Index = () => {
           title={selectedTopic.title}
           description={selectedTopic.fullDescription}
           icon={selectedTopic.icon}
-          onStartQuiz={handleStartQuiz}
-          onClose={() => setSelectedTopic(null)}
+          onClose={handleTopicClose}
         />
       )}
     </div>

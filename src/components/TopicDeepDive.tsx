@@ -3,12 +3,12 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Star } from "lucide-react";
 import { useToast } from "./ui/use-toast";
+import { Quiz } from "./Quiz";
 
 interface TopicDeepDiveProps {
   title: string;
   description: string;
   icon: string;
-  onStartQuiz: () => void;
   onClose: () => void;
 }
 
@@ -16,11 +16,11 @@ export const TopicDeepDive = ({
   title,
   description,
   icon,
-  onStartQuiz,
   onClose,
 }: TopicDeepDiveProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
 
   const handleStartQuiz = () => {
     setIsLoading(true);
@@ -31,9 +31,27 @@ export const TopicDeepDive = ({
     // Simulate loading for demo
     setTimeout(() => {
       setIsLoading(false);
-      onStartQuiz();
+      setShowQuiz(true);
     }, 1500);
   };
+
+  const handleQuizComplete = (score: number) => {
+    toast({
+      title: "Quiz Complete! 🎉",
+      description: `You scored ${score} points! Great job!`,
+    });
+    onClose();
+  };
+
+  if (showQuiz) {
+    return (
+      <Quiz
+        topic={title}
+        onComplete={handleQuizComplete}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in">
