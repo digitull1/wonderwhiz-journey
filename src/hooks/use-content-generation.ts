@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Topic {
+  title: string;
+  description: string;
+  icon: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  ageRange: string;
+  category: string;
+}
+
 export const useContentGeneration = () => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,8 +39,55 @@ export const useContentGeneration = () => {
     }
   };
 
+  const generateTopics = async (): Promise<Topic[]> => {
+    setIsLoading(true);
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('age')
+        .single();
+
+      const userAge = profileData?.age || 8;
+
+      // First try to get topics from the content_blocks table
+      const { data: existingTopics } = await supabase
+        .from('content_blocks')
+        .select('*')
+        .contains('age_range', [userAge]);
+
+      if (existingTopics && existingTopics.length > 0) {
+        return existingTopics.map(topic => ({
+          title: topic.title,
+          description: topic.description,
+          icon: topic.metadata?.icon || '✨',
+          difficulty: topic.metadata?.difficulty || 'Easy',
+          ageRange: `${topic.age_range[0]}-${topic.age_range[1]}`,
+          category: topic.topic
+        }));
+      }
+
+      // If no topics found, generate them using the edge function
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: { 
+          type: 'topics',
+          userAge 
+        }
+      });
+
+      if (error) throw error;
+
+      return data.topics || [];
+    } catch (error) {
+      console.error('Error generating topics:', error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     generateContent,
+    generateTopics,
     isLoading
   };
 };

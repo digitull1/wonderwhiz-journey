@@ -51,7 +51,6 @@ const Index = () => {
   };
 
   const handleExploreMore = () => {
-    // This would typically load related topics
     toast.info("Loading more magical topics for you! ✨");
   };
 
