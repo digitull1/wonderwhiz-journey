@@ -10,6 +10,17 @@ interface Topic {
   category: string;
 }
 
+interface ContentBlock {
+  title: string;
+  description: string;
+  topic: string;
+  age_range: number[];
+  metadata: {
+    icon?: string;
+    difficulty?: "Easy" | "Medium" | "Hard";
+  };
+}
+
 export const useContentGeneration = () => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,7 +67,7 @@ export const useContentGeneration = () => {
         .contains('age_range', [userAge]);
 
       if (existingTopics && existingTopics.length > 0) {
-        return existingTopics.map(topic => ({
+        return (existingTopics as ContentBlock[]).map(topic => ({
           title: topic.title,
           description: topic.description,
           icon: topic.metadata?.icon || '✨',
