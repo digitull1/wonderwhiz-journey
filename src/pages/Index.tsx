@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { TopicCard } from "@/components/TopicCard";
+import { TopicDeepDive } from "@/components/TopicDeepDive";
 
 const topics = [
   {
@@ -10,6 +11,7 @@ const topics = [
     points: 10,
     difficulty: "Easy" as const,
     icon: "🌈",
+    fullDescription: "Rainbows appear when sunlight hits water droplets in the air at just the right angle. Each droplet acts like a tiny prism, splitting white light into all the colors we can see. That's why we often see rainbows after it rains - there are lots of water droplets in the air! The rainbow's shape is actually a full circle, but we usually only see half of it because the ground gets in the way.",
   },
   {
     id: 2,
@@ -18,6 +20,7 @@ const topics = [
     points: 10,
     difficulty: "Easy" as const,
     icon: "⭐",
+    fullDescription: "Stars appear to twinkle because their light travels through Earth's moving atmosphere. As the air moves, it bends the starlight slightly, making the stars seem to sparkle and dance in the night sky. This is called atmospheric scintillation. Interestingly, if you were in space, the stars wouldn't appear to twinkle at all!",
   },
   {
     id: 3,
@@ -26,14 +29,25 @@ const topics = [
     points: 15,
     difficulty: "Medium" as const,
     icon: "🦋",
+    fullDescription: "Butterflies go through an amazing process called metamorphosis. It starts when a tiny egg hatches into a caterpillar. The caterpillar eats lots of leaves and grows bigger. Then, it forms a chrysalis around itself. Inside the chrysalis, the caterpillar's body completely changes, and after about two weeks, a beautiful butterfly emerges!",
   },
 ];
 
 const Index = () => {
   const [user, setUser] = useState<{ name: string; age: number } | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<typeof topics[0] | null>(null);
 
   const handleWelcomeComplete = (name: string, age: number) => {
     setUser({ name, age });
+  };
+
+  const handleTopicClick = (topic: typeof topics[0]) => {
+    setSelectedTopic(topic);
+  };
+
+  const handleStartQuiz = () => {
+    // TODO: Implement quiz functionality
+    console.log("Starting quiz for topic:", selectedTopic?.title);
   };
 
   if (!user) {
@@ -57,11 +71,21 @@ const Index = () => {
             <TopicCard
               key={topic.id}
               {...topic}
-              onClick={() => console.log("Clicked:", topic.title)}
+              onClick={() => handleTopicClick(topic)}
             />
           ))}
         </div>
       </div>
+
+      {selectedTopic && (
+        <TopicDeepDive
+          title={selectedTopic.title}
+          description={selectedTopic.fullDescription}
+          icon={selectedTopic.icon}
+          onStartQuiz={handleStartQuiz}
+          onClose={() => setSelectedTopic(null)}
+        />
+      )}
     </div>
   );
 };
