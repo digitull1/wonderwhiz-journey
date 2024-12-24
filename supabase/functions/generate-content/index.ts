@@ -22,20 +22,44 @@ serve(async (req) => {
     let systemPrompt = "";
     switch (type) {
       case "topics":
-        systemPrompt = `Generate 3 educational topics for children. For each topic provide:
-          - title: engaging and child-friendly
-          - description: brief, fun explanation
-          - points: number between 5-20
-          - difficulty: "Easy", "Medium", or "Hard"
-          - icon: an emoji that represents the topic
-          Format as JSON array.`;
+        systemPrompt = `Generate 3 educational topics for children. Return ONLY a JSON array with objects containing these exact keys:
+          - title: string (engaging and child-friendly)
+          - description: string (brief, fun explanation)
+          - points: number (between 5-20)
+          - difficulty: string (must be exactly "Easy", "Medium", or "Hard")
+          - icon: string (an emoji that represents the topic)
+          
+          Example format:
+          [
+            {
+              "title": "Space Adventures",
+              "description": "Blast off into the cosmos!",
+              "points": 15,
+              "difficulty": "Medium",
+              "icon": "🚀"
+            }
+          ]`;
         break;
       case "content":
-        systemPrompt = `Generate educational content about "${prompt}" for children. Include:
-          - A fun, detailed explanation
-          - 3 interesting facts
-          - 3 follow-up questions to spark curiosity
-          Format as JSON object with keys: explanation, facts (array), followUpQuestions (array).`;
+        systemPrompt = `Generate educational content about "${prompt}" for children. Return ONLY a JSON object with these exact keys:
+          - explanation: string (a fun, detailed explanation)
+          - facts: string[] (array of 3 interesting facts)
+          - followUpQuestions: string[] (array of 3 questions to spark curiosity)
+          
+          Example format:
+          {
+            "explanation": "The solar system is like a big family...",
+            "facts": [
+              "The Sun is so big that...",
+              "Mars is called the red planet because...",
+              "Jupiter has a giant storm that..."
+            ],
+            "followUpQuestions": [
+              "What would it be like to live on Mars?",
+              "Why do planets orbit around the Sun?",
+              "How many moons does Jupiter have?"
+            ]
+          }`;
         break;
       default:
         throw new Error("Invalid content type requested");
@@ -53,7 +77,23 @@ serve(async (req) => {
       parsedContent = JSON.parse(text);
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', parseError);
-      throw new Error('Invalid JSON response from Gemini');
+      throw new Error('Invalid JSON response from Gemini. Raw response: ' + text);
+    }
+
+    // Validate the structure based on type
+    if (type === "topics") {
+      if (!Array.isArray(parsedContent)) {
+        throw new Error('Topics response must be an array');
+      }
+      parsedContent.forEach((topic, index) => {
+        if (!topic.title || !topic.description || !topic.points || !topic.difficulty || !topic.icon) {
+          throw new Error(`Topic at index ${index} is missing required fields`);
+        }
+      });
+    } else if (type === "content") {
+      if (!parsedContent.explanation || !Array.isArray(parsedContent.facts) || !Array.isArray(parsedContent.followUpQuestions)) {
+        throw new Error('Content response is missing required fields');
+      }
     }
 
     return new Response(
