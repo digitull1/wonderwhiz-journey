@@ -20,33 +20,75 @@ export const Chat = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        setUserProfile(data);
-      } else {
-        // Create an anonymous session if no user exists
-        const { data: { user: anonUser }, error } = await supabase.auth.signUp({
-          email: `anonymous_${Date.now()}@temp.com`,
-          password: crypto.randomUUID(),
-        });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
         
-        if (!error && anonUser) {
+        if (user) {
           const { data } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', anonUser.id)
+            .eq('id', user.id)
             .single();
           setUserProfile(data);
+        } else {
+          // Try to create an anonymous user with retries
+          let retryCount = 0;
+          const maxRetries = 3;
+          
+          while (retryCount < maxRetries) {
+            try {
+              const randomId = Math.random().toString(36).substring(7);
+              const { data: { user: anonUser }, error } = await supabase.auth.signUp({
+                email: `anonymous_${randomId}_${Date.now()}@temp.com`,
+                password: crypto.randomUUID(),
+              });
+              
+              if (!error && anonUser) {
+                // Wait a short moment for the trigger to complete
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const { data } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', anonUser.id)
+                  .single();
+                
+                if (data) {
+                  setUserProfile(data);
+                  break;
+                }
+              }
+              
+              retryCount++;
+              if (retryCount === maxRetries) {
+                console.error('Failed to create anonymous user after max retries');
+                toast({
+                  title: "Error creating anonymous session",
+                  description: "Please try refreshing the page",
+                  variant: "destructive",
+                });
+              }
+              
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (error) {
+              console.error('Error in anonymous user creation:', error);
+              retryCount++;
+            }
+          }
         }
+      } catch (error) {
+        console.error('Error in fetchProfile:', error);
+        toast({
+          title: "Error loading profile",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
       }
     };
+    
     fetchProfile();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -72,7 +114,6 @@ export const Chat = () => {
       console.log('Generated content:', content);
       
       if (content) {
-        // Add AI response with the generated content
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           text: content.explanation || "I couldn't generate a proper response. Please try again.",
@@ -83,7 +124,6 @@ export const Chat = () => {
           ],
         }]);
 
-        // Trigger confetti for engaging responses
         confetti({
           particleCount: 100,
           spread: 70,
