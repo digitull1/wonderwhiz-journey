@@ -37,23 +37,42 @@ export const Chat = () => {
           
           while (retryCount < maxRetries) {
             try {
-              const randomId = Math.random().toString(36).substring(7);
+              // Generate a more unique identifier for anonymous users
+              const timestamp = Date.now();
+              const randomString = Math.random().toString(36).substring(2, 15);
+              const uniqueId = `${timestamp}_${randomString}`;
+              
+              console.log('Attempting to create anonymous user:', uniqueId);
+              
               const { data: { user: anonUser }, error } = await supabase.auth.signUp({
-                email: `anonymous_${randomId}_${Date.now()}@temp.com`,
+                email: `anonymous_${uniqueId}@temp.com`,
                 password: crypto.randomUUID(),
               });
               
-              if (!error && anonUser) {
-                // Wait a short moment for the trigger to complete
-                await new Promise(resolve => setTimeout(resolve, 1000));
+              if (error) {
+                console.error('Error in signup:', error);
+                throw error;
+              }
+              
+              if (anonUser) {
+                console.log('Anonymous user created:', anonUser.id);
                 
-                const { data } = await supabase
+                // Wait longer for the trigger to complete
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const { data, error: profileError } = await supabase
                   .from('profiles')
                   .select('*')
                   .eq('id', anonUser.id)
                   .single();
                 
+                if (profileError) {
+                  console.error('Error fetching profile:', profileError);
+                  throw profileError;
+                }
+                
                 if (data) {
+                  console.log('Profile fetched successfully:', data.id);
                   setUserProfile(data);
                   break;
                 }
@@ -69,11 +88,14 @@ export const Chat = () => {
                 });
               }
               
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // Increased wait time between retries
+              await new Promise(resolve => setTimeout(resolve, 2000));
             } catch (error) {
-              console.error('Error in anonymous user creation:', error);
+              console.error('Error in anonymous user creation attempt ${retryCount + 1}:', error);
               retryCount++;
+              
+              // Wait before next retry
+              await new Promise(resolve => setTimeout(resolve, 2000));
             }
           }
         }
