@@ -3,6 +3,7 @@ import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { TopicCard } from "@/components/TopicCard";
 import { TopicDeepDive } from "@/components/TopicDeepDive";
 import { Chat } from "@/components/Chat";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const topics = [
