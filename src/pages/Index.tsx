@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
-import { TopicCard } from "@/components/TopicCard";
-import { TopicDeepDive } from "@/components/TopicDeepDive";
+import { TopicBlock } from "@/components/blocks/TopicBlock";
+import { TopicModal } from "@/components/blocks/TopicModal";
 import { Chat } from "@/components/Chat";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -11,9 +11,10 @@ import { Loader2, Sparkles } from "lucide-react";
 interface Topic {
   title: string;
   description: string;
-  points: number;
-  difficulty: "Easy" | "Medium" | "Hard";
   icon: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  ageRange: string;
+  category: string;
 }
 
 const Index = () => {
@@ -47,6 +48,11 @@ const Index = () => {
 
   const handleTopicClose = () => {
     setSelectedTopic(null);
+  };
+
+  const handleExploreMore = () => {
+    // This would typically load related topics
+    toast.info("Loading more magical topics for you! ✨");
   };
 
   if (!user) {
@@ -100,7 +106,7 @@ const Index = () => {
                 className="animate-fade-in"
                 style={{ animationDelay: `${index * 150}ms` }}
               >
-                <TopicCard {...topic} onClick={() => handleTopicClick(topic)} />
+                <TopicBlock {...topic} onClick={() => handleTopicClick(topic)} />
               </div>
             ))}
           </div>
@@ -114,11 +120,11 @@ const Index = () => {
       </div>
 
       {selectedTopic && (
-        <TopicDeepDive
-          title={selectedTopic.title}
-          description={selectedTopic.description}
-          icon={selectedTopic.icon}
+        <TopicModal
+          isOpen={true}
           onClose={handleTopicClose}
+          topic={selectedTopic}
+          onExploreMore={handleExploreMore}
         />
       )}
     </div>

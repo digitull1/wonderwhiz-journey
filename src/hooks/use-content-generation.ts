@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface Topic {
   title: string;
   description: string;
-  points: number;
-  difficulty: "Easy" | "Medium" | "Hard";
   icon: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  ageRange: string;
+  category: string;
 }
 
 interface ContentDetails {
